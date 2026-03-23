@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SA Construction Industry Survey — Project Intelligence SA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+  .survey-wrap { padding: 100px 48px 80px; max-width: 800px; margin: 0 auto; }
+
+  .s-header { margin-bottom: 56px; }
+  .s-header-label { font-family: var(--font-mono); font-size: 10px; color: var(--gold); letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 16px; display: flex; align-items: center; gap: 10px; }
+  .s-header-label::before { content: ''; width: 24px; height: 1px; background: var(--gold); }
+  .s-header h1 { font-family: var(--font-display); font-size: clamp(32px, 5vw, 56px); font-weight: 600; line-height: 1.1; color: var(--white); margin-bottom: 16px; }
+  .s-header h1 em { font-style: italic; color: var(--gold); }
+  .s-header-body { font-size: 15px; color: var(--grey1); line-height: 1.8; }
+  .s-header-note { font-size: 12px; color: var(--grey2); margin-top: 10px; font-style: italic; }
+
+  .s-section { background: var(--bg2); border: 1px solid var(--rule); padding: 40px; margin-bottom: 2px; position: relative; overflow: hidden; }
+  .s-section::before { content: ''; position: absolute; top: 0; left: 0; width: 3px; height: 100%; background: var(--gold); }
+  .s-section-title { font-family: var(--font-display); font-size: 24px; font-weight: 600; color: var(--white); margin-bottom: 6px; }
+  .s-section-sub { font-size: 12px; color: var(--grey2); font-style: italic; margin-bottom: 32px; line-height: 1.6; }
+
+  .s-field { margin-bottom: 32px; }
+  .s-field:last-child { margin-bottom: 0; }
+  .s-label { font-family: var(--font-mono); font-size: 11px; color: var(--grey1); letter-spacing: 0.06em; margin-bottom: 12px; display: block; line-height: 1.5; }
+  .s-label .req { color: var(--gold); }
+
+  .s-options { display: flex; flex-direction: column; gap: 6px; list-style: none; }
+  .s-options li label { display: flex; align-items: center; gap: 12px; padding: 11px 14px; border: 1px solid var(--rule); cursor: pointer; transition: border-color 0.2s, background 0.2s; font-size: 13px; color: var(--grey1); }
+  .s-options li label:hover { border-color: var(--gold-dim); background: var(--bg3); color: var(--white); }
+  .s-options input[type="radio"], .s-options input[type="checkbox"] { accent-color: var(--gold); width: 14px; height: 14px; flex-shrink: 0; cursor: pointer; }
+  .s-options input[type="checkbox"]:disabled + span { opacity: 0.4; }
+  .s-options li:has(input:disabled) label { opacity: 0.5; cursor: not-allowed; }
+
+  .s-input, .s-textarea { background: var(--bg3); border: 1px solid var(--rule); color: var(--white); font-family: var(--font-body); font-size: 14px; padding: 12px 16px; width: 100%; outline: none; transition: border-color 0.2s; }
+  .s-input:focus, .s-textarea:focus { border-color: var(--gold); }
+  .s-textarea { resize: vertical; min-height: 110px; }
+  .s-input::placeholder, .s-textarea::placeholder { color: var(--grey3); }
+  .s-input[type="number"] { -moz-appearance: textfield; }
+  .s-input[type="number"]::-webkit-inner-spin-button { opacity: 0.4; }
+
+  .s-specifier { display: none; margin-top: 10px; }
+  .s-specifier.visible { display: block; }
+
+  .s-price-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .s-price-item {}
+  .s-price-sub { font-size: 11px; color: var(--grey2); margin-bottom: 6px; display: block; }
+
+  .s-feature-count { font-family: var(--font-mono); font-size: 10px; color: var(--gold); letter-spacing: 0.1em; margin-left: 8px; }
+
+  .s-stopped-reasons { display: none; margin-top: 28px; padding-top: 28px; border-top: 1px solid var(--rule); }
+  .s-stopped-reasons.visible { display: block; }
+
+  .s-early-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 20px; }
+
+  .s-error { background: rgba(170,34,34,0.15); border: 1px solid #AA2222; color: #FF9999; font-size: 13px; padding: 16px 20px; margin-bottom: 24px; font-family: var(--font-mono); letter-spacing: 0.05em; display: none; }
+  .s-error.visible { display: block; }
+
+  .s-success { text-align: center; padding: 80px 40px; display: none; }
+  .s-success.visible { display: block; }
+  .s-success h2 { font-family: var(--font-display); font-size: clamp(36px, 5vw, 52px); font-weight: 600; color: var(--white); margin-bottom: 20px; }
+  .s-success h2 em { font-style: italic; color: var(--gold); }
+  .s-success p { font-size: 15px; color: var(--grey1); line-height: 1.8; max-width: 480px; margin: 0 auto 40px; }
+
+  .btn-submit-survey { background: var(--gold); color: var(--bg); font-family: var(--font-body); font-size: 13px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; padding: 18px 40px; border: none; cursor: pointer; transition: background 0.2s; width: 100%; margin-top: 8px; }
+  .btn-submit-survey:hover:not(:disabled) { background: var(--gold-lt); }
+  .btn-submit-survey:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .s-submit-wrap { padding: 8px 0 48px; }
+
+  @media (max-width: 768px) {
+    .survey-wrap { padding: 80px 20px 60px; }
+    .s-section { padding: 28px 20px; }
+    .s-price-grid { grid-template-columns: 1fr; }
+    .s-early-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="index.html" class="nav-logo">
+    <div class="nav-logo-mark">PI</div>
+    <div class="nav-logo-text">Project Intelligence <span>SA</span></div>
+  </a>
+  <ul class="nav-links">
+    <li><a href="index.html#survey">Survey</a></li>
+    <li><a href="index.html#publications">Briefs</a></li>
+    <li><a href="index.html#reports">Reports</a></li>
+    <li><a href="index.html#about">About</a></li>
+    <li><a href="index.html#contact" class="nav-cta">Enquire</a></li>
+  </ul>
+</nav>
+
+<div class="survey-wrap">
+
+  <!-- PAGE HEADER -->
+  <div class="s-header">
+    <div class="s-header-label">Industry Research &middot; Q2 2026</div>
+    <h1>SA Construction <em>Industry</em> Survey</h1>
+    <p class="s-header-body">Help shape the tools South African construction actually needs. Your answers are anonymous and will be used in the Q2 2026 Industry Report. Takes approximately 6&ndash;8 minutes to complete.</p>
+    <p class="s-header-note">This is not a sales survey. All individual responses are strictly confidential &mdash; only aggregated findings are published.</p>
+  </div>
+
+  <!-- SUCCESS STATE -->
+  <div id="survey-success" class="s-success">
+    <h2>Thank <em>you</em></h2>
+    <p>Your response has been captured. You&rsquo;ll receive the full Q2 2026 Industry Report free on publication.</p>
+    <a href="index.html" class="btn-primary">Return to Project Intelligence SA</a>
+  </div>
+
+  <!-- SURVEY FORM -->
+  <form id="survey-form">
+
+    <div id="error-banner" class="s-error"></div>
+
+    <!-- Honeypot -->
+    <input type="text" id="honey" name="honey" style="display:none" tabindex="-1" autocomplete="off">
+
+    <!-- ===================== SECTION 0 ===================== -->
+    <div class="s-section">
+      <div class="s-section-title">Section 0 &mdash; About You</div>
+      <div class="s-section-sub">Real segmentation, real insight.</div>
+
+      <div class="s-field">
+        <span class="s-label">What best describes your company? <span class="req">*</span></span>
+        <ul class="s-options">
+          <li><label><input type="radio" name="company_type" value="Main Contractor"><span>Main Contractor</span></label></li>
+          <li><label><input type="radio" name="company_type" value="Subcontractor"><span>Subcontractor</span></label></li>
+          <li><label><input type="radio" name="company_type" value="Architect"><span>Architect</span></label></li>
+          <li><label><input type="radio" name="company_type" value="Consulting Engineer"><span>Consulting Engineer</span></label></li>
+          <li><label><input type="radio" name="company_type" value="Quantity Surveyor"><span>Quantity Surveyor</span></label></li>
+          <li><label><input type="radio" name="company_type" value="Developer / Client"><span>Developer / Client</span></label></li>
+          <li><label><input type="radio" name="company_type" value="Other"><span>Other</span></label></li>
+        </ul>
+      </div>
+
+      <div class="s-field">
+        <span class="s-label">What is your role? <span class="req">*</span></span>
+        <ul class="s-options">
+          <li><label><input type="radio" name="role_title" value="Owner / Director"><span>Owner / Director</span></label></li>
+          <li><label><input type="radio" name="role_title" value="Project Manager"><span>Project Manager</span></label></li>
+          <li><label><input type="radio" name="role_title" value="Site Manager"><span>Site Manager</span></label></li>
+          <li><label><input type="radio" name="role_title" value="Designer / Engineer"><span>Designer / Engineer</span></label></li>
+          <li><label><input type="radio" name="role_title" value="Quantity Surveyor"><span>Quantity Surveyor</span></label></li>
+          <li><label><input type="radio" name="role_title" value="Other"><span>Other</span></label></li>
+        </ul>
+      </div>
+
+      <div class="s-field">
+        <span class="s-label">How many people are in your company? <span class="req">*</span></span>
+        <ul class="s-options">
+          <li><label><input type="radio" name="company_size" value="1–5"><span>1&ndash;5</span></label></li>
+          <li><label><input type="radio" name="company_size" value="6–20"><span>6&ndash;20</span></label></li>
+          <li><label><input type="radio" name="company_size" value="21–50"><span>21&ndash;50</span></label></li>
+          <li><label><input type="radio" name="company_size" value="50+"><span>50+</span></label></li>
+        </ul>
+      </div>
+
+      <div class="s-field">
+        <span class="s-label">Where do you mainly operate? <span class="req">*</span></span>
+        <ul class="s-options">
+          <li><label><input type="radio" name="region" value="Gauteng"><span>Gauteng</span></label></li>
+          <li><label><input type="radio" name="region" value="Western Cape"><span>Western Cape</span></label></li>
+          <li><label><input type="radio" name="region" value="KZN"><span>KZN</span></label></li>
+          <li><label><input type="radio" name="region" value="Other"><span>Other</span></label></li>
+        </ul>
+      </div>
+
+      <div class="s-field">
+        <span class="s-label">What type of projects do you mainly work on? Select all that apply. <span class="req">*</span></span>
+        <ul class="s-options">
+          <li><label><input type="checkbox" data-group="project_types" value="Residential"><span>Residential</span></label></li>
+          <li><label><input type="checkbox" data-group="project_types" value="Commercial"><span>Commercial</span></label></li>
+          <li><label><input type="checkbox" data-group="project_types" value="Industrial"><span>Industrial</span></label></li>
+          <li><label><input type="checkbox" data-group="project_types" value="Mixed-use"><span>Mixed-use</span></label></li>
+          <li><label><input type="checkbox" data-group="project_types" value="Government / Public"><span>Government / Public</span></label></li>
+          <li><label><input type="checkbox" data-group="project_types" value="Other"><span>Other</span></label></li>
+        </ul>
+      </div>
+
+      <div class="s-field">
+        <span class="s-label">Typical project size? <span class="req">*</span></span>
+        <ul class="s-options">
+          <li><label><input type="radio" name="typical_project_size" value="Under R10m"><span>Under R10m</span></label></li>
+          <li><label><input type="radio" name="typical_project_size" value="R10m – R50m"><span>R10m &ndash; R50m</span></label></li>
+          <li><label><input type="radio" name="typical_project_size" value="R50m – R200m"><span>R50m &ndash; R200m</span></label></li>
+          <li><label><input type="radio" name="typical_project_size" value="R200m+"><span>R200m+</span></label></li>
+        </ul>
+      </div>
+
+      <div class="s-field">
+        <span class="s-label">How many active projects are you running right now? <span class="req">*</span></span>
+        <ul class="s-options">
+          <li><label><input type="radio" name="active_projects" value="1–2"><span>1&ndash;2</span></label></li>
+          <li><label><input type="radio" name="active_projects" value="3–5"><span>3&ndash;5</span></label></li>
+          <li><label><input type="radio" name="active_projects" value="6–10"><span>6&ndash;10</span></label></li>
+          <li><label><input type="radio" name="active_projects" value="10+"><span>10+</span></label></li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- ===================== SECTION 1 ===================== -->
+    <div class="s-section">
+      <div class="s-section-title">Section 1 &mdash; Current Tools &amp; Workflow</div>
+      <div class="s-section-sub">No judgement &mdash; most of the industry is on WhatsApp and Excel.</div>
+
+      <div class="s-field">
+        <span class="s-label">What do you currently use for site reports? Select all that apply. <span class="req">*</span></span>
+        <ul class="s-options">
+          <li><label><input type="checkbox" data-group="site_report_tools" value="WhatsApp"><span>WhatsApp</span></label></li>
+          <li><label><input type="checkbox" data-group="site_report_tools" value="Email"><span>Email</span></label></li>
+          <li><label><input type="checkbox" data-group="site_report_tools" value="Word / PDF"><span>Word / PDF</span></label></li>
+          <li><label><input type="checkbox" data-group="site_report_tools" value="Specialised software"><span>Specialised software</span></label></li>
+          <li><label><input type="checkbox" data-group="site_report_tools" value="Other"><span>Other</span></label></li>
+        </ul>
+        <div id="site_report_other_wrap" class="s-specifier">
+          <input class="s-input" type="text" id="site_report_software_other" placeholder="Please specify">
+        </div>
+      </div>
+
+      <div class="s-field">
+        <span class="s-label">What do you use for issue tracking? Select all that apply. <span class="req">*</span></span>
+        <ul class="s-options">
+          <li><label><input type="checkbox" data-group="issue_tracking_tools" value="WhatsApp"><span>WhatsApp</span></label></li>
+          <li><label><input type="checkbox" data-group="issue_tracking_tools" value="Excel"><span>Excel</span></label></li>
+          <li><label><input type="checkbox" data-group="issue_tracking_tools" value="Email"><span>Email</span></label></li>
+          <li><label><input type="checkbox" data-group="issue_tracking_tools" value="Software"><span>Software</span></label></li>
+          <li><label><input type="checkbox" data-group="issue_tracking_tools" value="Other"><span>Other</span></label></li>
+        </ul>
+        <div id="issue_tracking_other_wrap" class="s-specifier">
+          <input class="s-input" type="text" id="issue_tracking_software_other" placeholder="Please specify">
+        </div>
+      </div>
+
+      <div class="s-field">
+        <span class="s-label">What do you use for VO / site instruction tracking? Select all that apply. <span class="req">*</span></span>
+        <ul class="s-options">
+          <li><label><input type="checkbox" data-group="vo_tracking_tools" value="WhatsApp"><span>WhatsApp</span></label></li>
+          <li><label><input type="checkbox" data-group="vo_tracking_tools" value="Email"><span>Email</span></label></li>
+          <li><label><input type="checkbox" data-group="vo_tracking_tools" value="Excel"><span>Excel</span></label></li>
+          <li><label><input type="checkbox" data-group="vo_tracking_tools" value="Formal VO system"><span>Formal VO system</span></label></li>
+          <li><label><input type="checkbox" data-group="vo_tracking_tools" value="Other"><span>Other</span></label></li>
+        </ul>
+        <div id="vo_tracking_other_wrap" class="s-specifier">
+          <input class="s-input" type="text" id="vo_tracking_other" placeholder="Please specify">
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================== SECTION 2 ===================== -->
+    <div class="s-section">
+      <div class="s-section-title">Section 2 &mdash; Pain &amp; Problems</div>
+      <div class="s-section-sub">This is the most important section. Be honest.</div>
+
+      <div class="s-field">
+        <span class="s-label">What is your biggest frustration when managing site communication? <span class="req">*</span></span>
+        <ul class="s-options">
+          <li><label><input type="radio" name="biggest_frustration" value="Poor communication between teams"><span>Poor communication between teams</span></label></li>
+          <li><label><input type="radio" name="biggest_frustration" value="No proper record / audit trail"><span>No proper record / audit trail</span></label></li>
+          <li><label><input type="radio" name="biggest_frustration" value="Things get missed on site"><span>Things get missed on site</span></label></li>
+          <li><label><input type="radio" name="biggest_frustration" value="Disputes over what was said or agreed"><span>Disputes over what was said or agreed</span></label></li>
+          <li><label><input type="radio" name="biggest_frustration" value="Too much admin / paperwork"><span>Too much admin / paperwork</span></label></li>
+          <li><label><input type="radio" name="biggest_frustration" value="Lack of accountability"><span>Lack of accountability</span></label></li>
+          <li><label><input type="radio" name="biggest_frustration" value="Other"><span>Other</span></label></li>
+        </ul>
+      </div>
+
+      <div class="s-field">
+        <span class="s-label">What is your second biggest frustration? <span class="req">*</span></span>
+        <ul class="s-options">
+          <li><label><input type="radio" name="second_biggest_frustration" value="Poor communication between teams"><span>Poor communication between teams</span></label></li>
+          <li><label><input type="radio" name="second_biggest_frustration" value="No proper record / audit trail"><span>No proper record / audit trail</span></label></li>
+          <li><label><input type="radio" name="second_biggest_frustration" value="Things get missed on site"><span>Things get missed on site</span></label></li>
+          <li><label><input type="radio" name="second_biggest_frustration" value="Disputes over what was said or agreed"><span>Disputes over what was said or agreed</span></label></li>
+          <li><label><input type="radio" name="second_biggest_frustration" value="Too much admin / paperwork"><span>Too much admin / paperwork</span></label></li>
+          <li><label><input type="radio" name="second_biggest_frustration" value="Lack of accountability"><span>Lack of accountability</span></label></li>
+          <li><label><input type="radio" name="second_biggest_frustration" value="Other"><span>Other</span></label></li>
+        </ul>
+      </div>
+
+      <div class="s-field">
+        <span class="s-label">How often do issues get lost or forgotten? <span class="req">*</span></span>
+        <ul class="s-options">
+          <li><label><input type="radio" name="issues_lost_frequency" value="Rarely"><span>Rarely</span></label></li>
+          <li><label><input type="radio" name="issues_lost_frequency" value="Sometimes"><span>Sometimes</span></label></li>
+          <li><label><input type="radio" name="issues_lost_frequency" value="Often"><span>Often</span></label></li>
+          <li><label><input type="radio" name="issues_lost_frequency" value="Very often"><span>Very often</span></label></li>
+        </ul>
+      </div>
+
+      <div class="s-field">
+        <span class="s-label">Has a documentation failure ever cost your company money? <span class="req">*</span></span>
+        <ul class="s-options">
+          <li><label><input type="radio" name="documentation_failure_cost_money" value="Yes"><span>Yes</span></label></li>
+          <li><label><input type="radio" name="documentation_failure_cost_money" value="No"><span>No</span></label></li>
+          <li><label><input type="radio" name="documentation_failure_cost_money" value="Prefer not to say"><span>Prefer not to say</span></label></li>
+        </ul>
+      </div>
+
+      <div class="s-field">
+        <span class="s-label">How urgent is solving this problem for your business? <span class="req">*</span></span>
+        <ul class="s-options">
+          <li><label><input type="radio" name="urgency_level" value="Not urgent"><span>Not urgent</span></label></li>
+          <li><label><input type="radio" name="urgency_level" value="Somewhat important"><span>Somewhat important</span></label></li>
+          <li><label><input type="radio" name="urgency_level" value="Important"><span>Important</span></label></li>
+          <li><label><input type="radio" name="urgency_level" value="Very urgent"><span>Very urgent</span></label></li>
+          <li><label><input type="radio" name="urgency_level" value="Critical"><span>Critical</span></label></li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- ===================== SECTION 3 ===================== -->
+    <div class="s-section">
+      <div class="s-section-title">Section 3 &mdash; Time &amp; Cost</div>
+      <div class="s-section-sub"></div>
+
+      <div class="s-field">
+        <span class="s-label">How much time do you spend on reports, issues, and admin per week? <span class="req">*</span></span>
+        <ul class="s-options">
+          <li><label><input type="radio" name="admin_time_per_week" value="Less than 2 hours / week"><span>Less than 2 hours / week</span></label></li>
+          <li><label><input type="radio" name="admin_time_per_week" value="2–5 hours / week"><span>2&ndash;5 hours / week</span></label></li>
+          <li><label><input type="radio" name="admin_time_per_week" value="5–10 hours / week"><span>5&ndash;10 hours / week</span></label></li>
+          <li><label><input type="radio" name="admin_time_per_week" value="10+ hours / week"><span>10+ hours / week</span></label></li>
+        </ul>
+      </div>
+
+      <div class="s-field">
+        <span class="s-label">How often do disputes happen due to unclear communication? <span class="req">*</span></span>
+        <ul class="s-options">
+          <li><label><input type="radio" name="dispute_frequency" value="Rarely"><span>Rarely</span></label></li>
+          <li><label><input type="radio" name="dispute_frequency" value="Sometimes"><span>Sometimes</span></label></li>
+          <li><label><input type="radio" name="dispute_frequency" value="Often"><span>Often</span></label></li>
+          <li><label><input type="radio" name="dispute_frequency" value="Very often"><span>Very often</span></label></li>
+        </ul>
+      </div>
+
+      <div class="s-field">
+        <span class="s-label">Do you believe better tracking would reduce disputes and rework? <span class="req">*</span></span>
+        <ul class="s-options">
+          <li><label><input type="radio" name="better_tracking_reduce_disputes" value="Yes"><span>Yes</span></label></li>
+          <li><label><input type="radio" name="better_tracking_reduce_disputes" value="No"><span>No</span></label></li>
+          <li><label><input type="radio" name="better_tracking_reduce_disputes" value="Not sure"><span>Not sure</span></label></li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- ===================== SECTION 4 ===================== -->
+    <div class="s-section">
+      <div class="s-section-title">Section 4 &mdash; Features &amp; Demand</div>
+      <div class="s-section-sub"></div>
+
+      <div class="s-field">
+        <span class="s-label">Which features would be most valuable to you? Select top 3. <span class="req">*</span> <span class="s-feature-count" id="feature-count">0/3 selected</span></span>
+        <ul class="s-options">
+          <li><label><input type="checkbox" data-group="valuable_features" value="Site reports with photos"><span>Site reports with photos</span></label></li>
+          <li><label><input type="checkbox" data-group="valuable_features" value="Multiple issues per report (floor, gridline, etc.)"><span>Multiple issues per report (floor, gridline, etc.)</span></label></li>
+          <li><label><input type="checkbox" data-group="valuable_features" value="Clear audit trail — who said what, when"><span>Clear audit trail &mdash; who said what, when</span></label></li>
+          <li><label><input type="checkbox" data-group="valuable_features" value="VO / site instruction tracking"><span>VO / site instruction tracking</span></label></li>
+          <li><label><input type="checkbox" data-group="valuable_features" value="WhatsApp sharing"><span>WhatsApp sharing</span></label></li>
+          <li><label><input type="checkbox" data-group="valuable_features" value="Project-wide collaboration — all companies on one platform"><span>Project-wide collaboration &mdash; all companies on one platform</span></label></li>
+          <li><label><input type="checkbox" data-group="valuable_features" value="Simple, fast mobile interface"><span>Simple, fast mobile interface</span></label></li>
+          <li><label><input type="checkbox" data-group="valuable_features" value="Other"><span>Other</span></label></li>
+        </ul>
+      </div>
+
+      <div class="s-field">
+        <span class="s-label">Would you use a system that replaces WhatsApp + Excel + email for site communication? <span class="req">*</span></span>
+        <ul class="s-options">
+          <li><label><input type="radio" name="replace_stack_likelihood" value="Yes"><span>Yes</span></label></li>
+          <li><label><input type="radio" name="replace_stack_likelihood" value="Maybe"><span>Maybe</span></label></li>
+          <li><label><input type="radio" name="replace_stack_likelihood" value="No"><span>No</span></label></li>
+        </ul>
+      </div>
+
+      <div class="s-field">
+        <span class="s-label">What would stop you from using a new system?</span>
+        <textarea class="s-textarea" id="stop_using_new_system" placeholder="Be honest."></textarea>
+      </div>
+
+      <div class="s-field">
+        <span class="s-label">Have you tried a site management tool before? <span class="req">*</span></span>
+        <ul class="s-options">
+          <li><label><input type="radio" name="used_site_tool_before" value="No — never tried one"><span>No &mdash; never tried one</span></label></li>
+          <li><label><input type="radio" name="used_site_tool_before" value="Yes — and we're still using it"><span>Yes &mdash; and we&rsquo;re still using it</span></label></li>
+          <li><label><input type="radio" name="used_site_tool_before" value="Yes — and we stopped"><span>Yes &mdash; and we stopped</span></label></li>
+        </ul>
+
+        <div id="stopped_tool_reasons_wrap" class="s-stopped-reasons">
+          <span class="s-label">Why did you stop? Select all that apply.</span>
+          <ul class="s-options">
+            <li><label><input type="checkbox" data-group="stopped_tool_reasons" value="Too complicated"><span>Too complicated</span></label></li>
+            <li><label><input type="checkbox" data-group="stopped_tool_reasons" value="Team didn't adopt it"><span>Team didn&rsquo;t adopt it</span></label></li>
+            <li><label><input type="checkbox" data-group="stopped_tool_reasons" value="Too expensive"><span>Too expensive</span></label></li>
+            <li><label><input type="checkbox" data-group="stopped_tool_reasons" value="Didn't solve real problems"><span>Didn&rsquo;t solve real problems</span></label></li>
+            <li><label><input type="checkbox" data-group="stopped_tool_reasons" value="Too much admin"><span>Too much admin</span></label></li>
+            <li><label><input type="checkbox" data-group="stopped_tool_reasons" value="Other"><span>Other</span></label></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================== SECTION 5 ===================== -->
+    <div class="s-section">
+      <div class="s-section-title">Section 5 &mdash; Buying Intent</div>
+      <div class="s-section-sub"></div>
+
+      <div class="s-field">
+        <span class="s-label">If a tool solved these problems, how likely would you be to adopt it? <span class="req">*</span></span>
+        <ul class="s-options">
+          <li><label><input type="radio" name="adoption_likelihood" value="Very likely"><span>Very likely</span></label></li>
+          <li><label><input type="radio" name="adoption_likelihood" value="Likely"><span>Likely</span></label></li>
+          <li><label><input type="radio" name="adoption_likelihood" value="Unsure"><span>Unsure</span></label></li>
+          <li><label><input type="radio" name="adoption_likelihood" value="Unlikely"><span>Unlikely</span></label></li>
+        </ul>
+      </div>
+
+      <div class="s-field">
+        <span class="s-label">Who would make the decision to use software like this? <span class="req">*</span></span>
+        <ul class="s-options">
+          <li><label><input type="radio" name="decision_maker" value="Me"><span>Me</span></label></li>
+          <li><label><input type="radio" name="decision_maker" value="My manager"><span>My manager</span></label></li>
+          <li><label><input type="radio" name="decision_maker" value="Director / Owner"><span>Director / Owner</span></label></li>
+          <li><label><input type="radio" name="decision_maker" value="Head office"><span>Head office</span></label></li>
+          <li><label><input type="radio" name="decision_maker" value="Other"><span>Other</span></label></li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- ===================== SECTION 6 ===================== -->
+    <div class="s-section">
+      <div class="s-section-title">Section 6 &mdash; Pricing</div>
+      <div class="s-section-sub">Think about a platform that saves time, reduces disputes, and creates a clear audit trail. Monthly price per company.</div>
+
+      <div class="s-field">
+        <div class="s-price-grid">
+          <div class="s-price-item">
+            <span class="s-price-sub">What price would feel cheap?</span>
+            <input class="s-input" type="number" id="price_cheap" min="0" placeholder="R">
+          </div>
+          <div class="s-price-item">
+            <span class="s-price-sub">What price would feel reasonable?</span>
+            <input class="s-input" type="number" id="price_reasonable" min="0" placeholder="R">
+          </div>
+          <div class="s-price-item">
+            <span class="s-price-sub">At what price does it start feeling expensive?</span>
+            <input class="s-input" type="number" id="price_expensive" min="0" placeholder="R">
+          </div>
+          <div class="s-price-item">
+            <span class="s-price-sub">At what price is it too expensive to consider?</span>
+            <input class="s-input" type="number" id="price_too_expensive" min="0" placeholder="R">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================== SECTION 7 ===================== -->
+    <div class="s-section">
+      <div class="s-section-title">Section 7 &mdash; Final Validation</div>
+      <div class="s-section-sub">This is the gold question.</div>
+
+      <div class="s-field">
+        <span class="s-label">What would make this a &ldquo;must-have&rdquo; tool for you?</span>
+        <textarea class="s-textarea" id="must_have_text" placeholder="Describe what would make it essential for your work."></textarea>
+      </div>
+    </div>
+
+    <!-- ===================== SECTION 8 ===================== -->
+    <div class="s-section">
+      <div class="s-section-title">Section 8 &mdash; Early Access</div>
+      <div class="s-section-sub">Optional. If you&rsquo;d like to receive the full Q2 2026 Industry Report or be first to access the platform.</div>
+
+      <div class="s-field">
+        <ul class="s-options">
+          <li>
+            <label>
+              <input type="checkbox" id="early_access">
+              <span>Yes &mdash; sign me up for early access to Project Intelligence / SnapSite</span>
+            </label>
+          </li>
+        </ul>
+      </div>
+
+      <div class="s-early-grid">
+        <div class="s-field" style="margin-bottom:0">
+          <span class="s-label">Email address</span>
+          <input class="s-input" type="email" id="email" placeholder="you@company.co.za">
+        </div>
+        <div class="s-field" style="margin-bottom:0">
+          <span class="s-label">WhatsApp number</span>
+          <input class="s-input" type="tel" id="whatsapp" placeholder="+27 ...">
+        </div>
+      </div>
+    </div>
+
+    <!-- SUBMIT -->
+    <div class="s-submit-wrap">
+      <button type="submit" id="submit-btn" class="btn-submit-survey">Submit My Responses</button>
+    </div>
+
+  </form>
+
+</div>
+
+<script src="js/main.js"></script>
+<script>
+  // ── Supabase client ──────────────────────────────────────
+  const { createClient } = window.supabase;
+  const sb = createClient(
+    'https://xqnmeqymkuuqozyfiakj.supabase.co',
+    'sb_publishable_HcbpsTkAY514azMuUoAizA_uyPtKU9H'
+  );
+
+  // ── Helpers ──────────────────────────────────────────────
+  function getRadio(name) {
+    const el = document.querySelector(`input[name="${name}"]:checked`);
+    return el ? el.value : '';
+  }
+
+  function getCheckboxes(group) {
+    return [...document.querySelectorAll(`input[data-group="${group}"]:checked`)].map(el => el.value);
+  }
+
+  function getText(id) {
+    const el = document.getElementById(id);
+    return el ? el.value.trim() : '';
+  }
+
+  function showError(msg) {
+    const el = document.getElementById('error-banner');
+    el.textContent = msg;
+    el.classList.add('visible');
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  function hideError() {
+    document.getElementById('error-banner').classList.remove('visible');
+  }
+
+  // ── Conditional visibility ───────────────────────────────
+  function setupConditionals() {
+    // site_report_tools → show specifier
+    document.querySelectorAll('input[data-group="site_report_tools"]').forEach(cb => {
+      cb.addEventListener('change', () => {
+        const checked = getCheckboxes('site_report_tools');
+        document.getElementById('site_report_other_wrap').classList.toggle(
+          'visible', checked.includes('Specialised software') || checked.includes('Other')
+        );
+      });
+    });
+
+    // issue_tracking_tools → show specifier
+    document.querySelectorAll('input[data-group="issue_tracking_tools"]').forEach(cb => {
+      cb.addEventListener('change', () => {
+        const checked = getCheckboxes('issue_tracking_tools');
+        document.getElementById('issue_tracking_other_wrap').classList.toggle(
+          'visible', checked.includes('Software') || checked.includes('Other')
+        );
+      });
+    });
+
+    // vo_tracking_tools → show specifier
+    document.querySelectorAll('input[data-group="vo_tracking_tools"]').forEach(cb => {
+      cb.addEventListener('change', () => {
+        document.getElementById('vo_tracking_other_wrap').classList.toggle(
+          'visible', getCheckboxes('vo_tracking_tools').includes('Other')
+        );
+      });
+    });
+
+    // used_site_tool_before → show stopped reasons
+    document.querySelectorAll('input[name="used_site_tool_before"]').forEach(rb => {
+      rb.addEventListener('change', () => {
+        document.getElementById('stopped_tool_reasons_wrap').classList.toggle(
+          'visible', getRadio('used_site_tool_before') === "Yes — and we stopped"
+        );
+      });
+    });
+
+    // valuable_features → max 3
+    document.querySelectorAll('input[data-group="valuable_features"]').forEach(cb => {
+      cb.addEventListener('change', () => {
+        const checked = getCheckboxes('valuable_features');
+        document.getElementById('feature-count').textContent = `${checked.length}/3 selected`;
+        document.querySelectorAll('input[data-group="valuable_features"]').forEach(el => {
+          if (!el.checked) el.disabled = checked.length >= 3;
+        });
+      });
+    });
+  }
+
+  // ── Validation ───────────────────────────────────────────
+  function validate() {
+    if (getText('honey'))                                    return 'Invalid submission.';
+    if (!getRadio('company_type'))                           return 'Please select your company type.';
+    if (!getRadio('role_title'))                             return 'Please select your role.';
+    if (!getRadio('company_size'))                           return 'Please select company size.';
+    if (!getRadio('region'))                                 return 'Please select your region.';
+    if (!getCheckboxes('project_types').length)              return 'Please select at least one project type.';
+    if (!getRadio('typical_project_size'))                   return 'Please select typical project size.';
+    if (!getRadio('active_projects'))                        return 'Please select number of active projects.';
+    if (!getCheckboxes('site_report_tools').length)          return 'Please select site report tools.';
+    if (!getCheckboxes('issue_tracking_tools').length)       return 'Please select issue tracking tools.';
+    if (!getCheckboxes('vo_tracking_tools').length)          return 'Please select VO tracking tools.';
+    if (!getRadio('biggest_frustration'))                    return 'Please select your biggest frustration.';
+    if (!getRadio('second_biggest_frustration'))             return 'Please select your second biggest frustration.';
+    if (!getRadio('issues_lost_frequency'))                  return 'Please select how often issues get lost.';
+    if (!getRadio('documentation_failure_cost_money'))       return 'Please answer the documentation question.';
+    if (!getRadio('urgency_level'))                          return 'Please select urgency level.';
+    if (!getRadio('admin_time_per_week'))                    return 'Please select admin time per week.';
+    if (!getRadio('dispute_frequency'))                      return 'Please select dispute frequency.';
+    if (!getRadio('better_tracking_reduce_disputes'))        return 'Please answer the tracking question.';
+    if (!getCheckboxes('valuable_features').length)          return 'Please select at least one valuable feature.';
+    if (!getRadio('replace_stack_likelihood'))               return 'Please answer the replacement question.';
+    if (!getRadio('used_site_tool_before'))                  return "Please answer whether you've used a site tool before.";
+    if (!getRadio('adoption_likelihood'))                    return 'Please answer adoption likelihood.';
+    if (!getRadio('decision_maker'))                         return 'Please select who makes the decision.';
+    return null;
+  }
+
+  // ── Submit ───────────────────────────────────────────────
+  document.getElementById('survey-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    hideError();
+
+    if (getText('honey')) return;
+
+    const err = validate();
+    if (err) { showError(err); return; }
+
+    const btn = document.getElementById('submit-btn');
+    btn.disabled = true;
+    btn.textContent = 'Submitting...';
+
+    const toNum = id => { const v = getText(id); return v ? Number(v) : null; };
+
+    const payload = {
+      survey_version: 'Q2-2026',
+      company_type: getRadio('company_type'),
+      role_title: getRadio('role_title'),
+      company_size: getRadio('company_size'),
+      region: getRadio('region'),
+      project_types: getCheckboxes('project_types'),
+      typical_project_size: getRadio('typical_project_size'),
+      active_projects: getRadio('active_projects'),
+      site_report_tools: getCheckboxes('site_report_tools'),
+      site_report_software_other: getText('site_report_software_other') || null,
+      issue_tracking_tools: getCheckboxes('issue_tracking_tools'),
+      issue_tracking_software_other: getText('issue_tracking_software_other') || null,
+      vo_tracking_tools: getCheckboxes('vo_tracking_tools'),
+      vo_tracking_other: getText('vo_tracking_other') || null,
+      biggest_frustration: getRadio('biggest_frustration'),
+      second_biggest_frustration: getRadio('second_biggest_frustration'),
+      issues_lost_frequency: getRadio('issues_lost_frequency'),
+      documentation_failure_cost_money: getRadio('documentation_failure_cost_money'),
+      urgency_level: getRadio('urgency_level'),
+      admin_time_per_week: getRadio('admin_time_per_week'),
+      dispute_frequency: getRadio('dispute_frequency'),
+      better_tracking_reduce_disputes: getRadio('better_tracking_reduce_disputes'),
+      valuable_features: getCheckboxes('valuable_features'),
+      replace_stack_likelihood: getRadio('replace_stack_likelihood'),
+      stop_using_new_system: getText('stop_using_new_system') || null,
+      used_site_tool_before: getRadio('used_site_tool_before'),
+      stopped_tool_reasons: getCheckboxes('stopped_tool_reasons'),
+      adoption_likelihood: getRadio('adoption_likelihood'),
+      decision_maker: getRadio('decision_maker'),
+      price_cheap: toNum('price_cheap'),
+      price_reasonable: toNum('price_reasonable'),
+      price_expensive: toNum('price_expensive'),
+      price_too_expensive: toNum('price_too_expensive'),
+      must_have_text: getText('must_have_text') || null,
+      early_access: document.getElementById('early_access').checked,
+      email: getText('email') || null,
+      whatsapp: getText('whatsapp') || null,
+      source: 'website',
+      user_agent: navigator.userAgent,
+    };
+
+    try {
+      const { error } = await sb.from('market_survey_responses').insert(payload);
+      if (error) throw error;
+      document.getElementById('survey-form').style.display = 'none';
+      const success = document.getElementById('survey-success');
+      success.classList.add('visible');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (err) {
+      showError(err.message || 'Submission failed — please try again or email us directly.');
+      btn.disabled = false;
+      btn.textContent = 'Submit My Responses';
+    }
+  });
+
+  setupConditionals();
+</script>
+</body>
+</html>
