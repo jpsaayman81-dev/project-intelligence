@@ -1,0 +1,41 @@
+{
+  "briefs": [
+    {
+      "status": "published",
+      "issue": "Issue 01 | Q4 2025",
+      "title": "Where the South African Construction Cycle Is Tilting",
+      "subtitle": "The national construction pipeline is not simply recovering — it is redistributing.",
+      "date": "February 2026",
+      "tags": ["National Outlook", "Pipeline Analysis", "Provincial Trends"],
+      "highlights": [
+        "R99.1bn national construction pipeline tracked",
+        "Western Cape up 6.8% — delivery capacity tightening",
+        "Gauteng contracts −14.0% as project mix shifts",
+        "Eastern Cape surges +18.8% on infrastructure awards",
+        "Residential and public works diverging sharply"
+      ],
+      "file": "assets/pdf/PI_SA_National_Outlook_Issue01_Q4_2025.pdf"
+    }
+  ],
+  "upcoming_briefs": [
+    {
+      "issue": "Issue 02 | Q1 2026",
+      "title": "Western Cape: Capacity, Cost, and the Contractor Crunch",
+      "subtitle": "As demand outpaces supply in the Western Cape, who wins and who gets squeezed?",
+      "date": "Expected May 2026",
+      "tags": ["Western Cape", "Contractor Capacity", "Cost Trends"]
+    }
+  ],
+  "intelligence_notes": [
+    {
+      "status": "forthcoming",
+      "forthcoming_label": "Coming Q2 2026",
+      "series": "Market Intelligence",
+      "type": "Sector Note",
+      "title": "South African Construction Market Survey — Q2 2026",
+      "desc": "Findings from our inaugural professional survey covering 100+ construction professionals across South Africa. Pain points, tooling gaps, and project pipeline outlook.",
+      "date": "Q2 2026",
+      "file": null
+    }
+  ]
+}
