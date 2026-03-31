@@ -1,3 +1,10 @@
+const sb = window.supabase
+  ? window.supabase.createClient(
+      'https://xqnmeqymkuuqozyfiakj.supabase.co',
+      'sb_publishable_HcbpsTkAY514azMuUoAizA_uyPtKU9H'
+    )
+  : null;
+
 function netlifySubmit(form, onSuccess) {
   const data = new FormData(form);
   fetch('/', {
@@ -16,6 +23,22 @@ const contactForm = document.querySelector('.contact-form');
 if (contactForm) {
   contactForm.addEventListener('submit', function(e) {
     e.preventDefault();
+    const data = new FormData(contactForm);
+
+    // Save to Supabase
+    if (sb) {
+      sb.from('enquiries').insert({
+        first_name: data.get('first-name') || null,
+        last_name:  data.get('last-name')  || null,
+        email:      data.get('email')      || null,
+        organisation: data.get('organisation') || null,
+        role:       data.get('role')       || null,
+        message:    data.get('message')    || null,
+        source:     'website'
+      });
+    }
+
+    // Also send to Netlify
     netlifySubmit(contactForm, () => {
       document.getElementById('form-success').style.display = 'block';
       contactForm.querySelectorAll('input, textarea, select, button').forEach(el => {

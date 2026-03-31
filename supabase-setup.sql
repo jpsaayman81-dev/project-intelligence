@@ -54,6 +54,36 @@ create table if not exists public.market_survey_responses (
   created_at timestamptz not null default now()
 );
 
+-- ─────────────────────────────────────────────
+-- ENQUIRIES — website contact form submissions
+-- ─────────────────────────────────────────────
+create table if not exists public.enquiries (
+  id           uuid primary key default gen_random_uuid(),
+  first_name   text,
+  last_name    text,
+  email        text,
+  organisation text,
+  role         text,
+  message      text,
+  source       text not null default 'website',
+  created_at   timestamptz not null default now()
+);
+
+alter table public.enquiries enable row level security;
+
+drop policy if exists "public_can_insert_enquiries" on public.enquiries;
+create policy "public_can_insert_enquiries"
+on public.enquiries
+for insert
+to anon, authenticated
+with check (true);
+
+create index if not exists idx_enquiries_created_at
+  on public.enquiries(created_at desc);
+
+-- ─────────────────────────────────────────────
+-- SURVEY RESPONSES
+-- ─────────────────────────────────────────────
 create index if not exists idx_market_survey_responses_created_at
   on public.market_survey_responses(created_at desc);
 
